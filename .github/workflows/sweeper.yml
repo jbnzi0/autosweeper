@@ -1,0 +1,32 @@
+name: Auto Sweeper
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  autosweeper:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: "1.21"
+
+      - name: Install dependencies
+        run: go mod download
+
+      - name: Build application
+        run: go build -o autosweeper cmd/main.go
+
+      - name: Run the Auto Sweeper
+        env:
+          ALGOLIA_APP_ID: ${{ secrets.ALGOLIA_APP_ID }}
+          ALGOLIA_API_KEY: ${{ secrets.ALGOLIA_API_KEY }}
+          ALGOLIA_INDEX: ${{ secrets.ALGOLIA_INDEX }}
+        run: ./autosweeper
