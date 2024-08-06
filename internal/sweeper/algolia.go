@@ -24,7 +24,7 @@ func (c Config) SweepAlgoliaRecords() {
 	var record Record
 
 	if err != nil {
-		log.Fatalf("Error browsing Algolia records %s", err)
+		log.Fatalf("Error browsing Algolia records %v", err)
 	}
 	deletedRecordsCount := 0
 
@@ -35,15 +35,21 @@ func (c Config) SweepAlgoliaRecords() {
 			if err == io.EOF {
 				break
 			}
-			log.Printf("Error with event %s, error: %s", record.Title, err)
+			log.Printf("Error with event %s, error: %v", record.Title, err)
 			continue
 		}
 
 		eventDate := time.UnixMilli(record.DateTimestamp)
 
 		if isMoreThanOneMonthAgo(eventDate) {
-			c.EventIndex.DeleteObject(record.ObjectID)
-			log.Printf("Record %s deleted", record.ObjectID)
+			_, err := c.EventIndex.DeleteObject(record.ObjectID)
+
+			if err != nil {
+				log.Printf("Error deleting record %s, error: %v", record.ObjectID, err)
+				continue
+			}
+
+			log.Printf("Record %s with ID %s deleted", record.Title, record.ObjectID)
 			deletedRecordsCount++
 		}
 	}
