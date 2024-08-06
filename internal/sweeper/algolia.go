@@ -3,6 +3,7 @@ package sweeper
 import (
 	"io"
 	"log"
+	"time"
 
 	"github.com/algolia/algoliasearch-client-go/v3/algolia/search"
 )
@@ -25,6 +26,7 @@ func (c Config) SweepAlgoliaRecords() {
 	if err != nil {
 		log.Fatalf("Error browsing Algolia records %s", err)
 	}
+	deletedRecordsCount := 0
 
 	for {
 		_, err := it.Next(&record)
@@ -37,7 +39,14 @@ func (c Config) SweepAlgoliaRecords() {
 			continue
 		}
 
-		log.Println(record.Title, record.DateTimestamp)
+		eventDate := time.UnixMilli(record.DateTimestamp)
 
+		if isMoreThanOneMonthAgo(eventDate) {
+			c.EventIndex.DeleteObject(record.ObjectID)
+			log.Printf("Record %s deleted", record.ObjectID)
+			deletedRecordsCount++
+		}
 	}
+
+	log.Printf("%d deleted records", deletedRecordsCount)
 }
